@@ -2,7 +2,7 @@
 
 constexpr uint8_t logo_width = 91;
 constexpr uint8_t logo_height = 18;
-constexpr uint8_t logo_x = 14;
+constexpr uint8_t logo_x = 16;
 constexpr uint8_t logo_y = 23;
 
 const uint8_t PROGMEM logo_bmp[] = {
