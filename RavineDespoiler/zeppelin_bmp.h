@@ -3,6 +3,7 @@
 constexpr uint8_t zeppelin_width = 30;
 constexpr uint8_t zeppelin_height = 18; // extra height is masked off
 
+// clang-format off
 const unsigned char PROGMEM zeppelin_plus_mask[] =
 {
 // width, height,

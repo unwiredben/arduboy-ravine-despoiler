@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 constexpr uint8_t press_a_to_start_width = 81;
 constexpr uint8_t press_a_to_start_height = 16;

@@ -26,6 +26,7 @@ using BigNumber = SFixed<15, 16>;
 #include "Util.h"
 
 #include "Font4x6.h"
+#include "boulder_bmp.h"
 #include "logo_bmp.h"
 #include "plane_bmp.h"
 #include "press_a_bmp.h"
@@ -108,10 +109,85 @@ struct GameObject {
 };
 
 struct Ravine {
+  static constexpr uint8_t boulders_width = 21;
+  static constexpr uint8_t boulders_height = 8;
+  static char boulders[boulders_height][boulders_width];
+
+  static constexpr uint8_t boulders_x_start = 11;
+  static constexpr uint8_t boulders_y_start = 0 + ravine_top;
+
+  void reset(char fill) {
+    // reset all non-walls to supplied state
+    for (int8_t i = 0; i < boulders_width; ++i) {
+      for (int8_t j = 0; j < boulders_height; ++j) {
+        char b = boulders[j][i];
+        if (b != 'W') {
+          boulders[j][i] = fill;
+        }
+      }
+    }
+  }
+
+  void update() {
+    // first update explosions
+    for (int8_t i = 0; i < boulders_width; ++i) {
+      for (int8_t j = 0; j < boulders_height; ++j) {
+        char &b = boulders[j][i];
+        if (b >= '1' && b <= '5')
+          b = b + 1;
+        else if (b == '6')
+          b = ' ';
+      }
+    }
+
+    // then update boulders to account for gravity.
+    // start at next-to-last row and search up to have a full
+    // column fall together
+    for (int8_t i = 0; i < boulders_width; ++i) {
+      for (int8_t j = boulders_height - 2; j >= 0; --j) {
+        char &b1 = boulders[j][i];
+        char &b0 = boulders[j + 1][i];
+        if (b0 == ' ') {
+          if (b1 == '0') {
+            b1 = '.';
+          } else if (b1 == '.') {
+            b1 = ' ';
+            b0 = '0';
+          }
+        } else if (b0 == '.' && b1 == '0') {
+          b1 = '.';
+        }
+      }
+    }
+  }
+
+  void explodeOne() {
+    int8_t i = random(0, boulders_width);
+    int8_t j = random(0, boulders_height);
+    char &b = boulders[j][i];
+    if (b == '0')
+      b = '1';
+  }
+
   void draw() {
     sprites.drawOverwrite(0, ravine_top, ravine_bmp, 0);
+    for (int8_t i = 0; i < boulders_width; ++i) {
+      for (int8_t j = 0; j < boulders_height; ++j) {
+        char b = boulders[j][i];
+        if (b >= '0' && b <= '6') {
+          sprites.drawPlusMask(i * 5 + boulders_x_start,
+                               j * 5 + boulders_y_start, boulder_plus_mask,
+                               b - '0');
+        } else if (b == '.') {
+          sprites.drawPlusMask(i * 5 + boulders_x_start,
+                               j * 5 + boulders_y_start + 3, boulder_plus_mask,
+                               0);
+        }
+      }
+    }
   }
-} ravine;
+} // namespace RavineDespoilerGame
+ravine;
 
 struct Plane : public GameObject {
   static constexpr BigNumber offscreen_x_margin = 10;
@@ -177,10 +253,13 @@ void enter_state(GameState newState) {
 
   if (newState == TITLE_SCREEN) {
     // reset game state for a new game
+    zeppelin.reset();
+    ravine.reset(' ');
   } else if (newState == GAME_ACTIVE) {
     // reset UI state for a new level
     randomSeed(arduboy.generateRandomSeed());
     plane.reset();
+    ravine.reset('0');
   }
 }
 
@@ -196,7 +275,6 @@ void initial_logo() {
 
 void title_screen() {
   if (arduboy.frameCount == 1) {
-    zeppelin.reset();
     arduboy.clear();
     ravine.draw();
     sprites.drawOverwrite(logo_x, logo_y, logo_bmp, 0);
@@ -239,6 +317,15 @@ void game_active() {
   }
   plane.applyXVelocity();
 
+  // update boulders every four frames
+  if (arduboy.frameCount % 4 == 0) {
+    ravine.update();
+  }
+
+  if (arduboy.frameCount % 128 == 0) {
+    ravine.explodeOne();
+  }
+
   arduboy.clear();
   ravine.draw();
   plane.draw();
@@ -263,7 +350,7 @@ void setup(void) {
 
 void loop(void) {
   if (!(arduboy.nextFrameDEV()))
-  // if (!(arduboy.nextFrame()))
+    // if (!(arduboy.nextFrame()))
     return;
 
   arduboy.pollButtons();
@@ -288,5 +375,24 @@ void loop(void) {
 
   arduboy.display();
 }
+
+// values are '0' through '5' for boulder.  0 is the normal state, while 1..5
+// are various states of the explosion. ' ' stands for no boulder, while 'W'
+// indicates that there is the wall of the ravine.  State '.' is a boulder
+// falling to the hole below. Initial settings are just holes and walls, as
+// holes are initially all reset to boulders at the start of a run.
+
+// clang-format off
+char Ravine::boulders[boulders_height][boulders_width] = {
+    { ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', ' ' },
+    { ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', ' ' },
+    { ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', ' ' },
+    { ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 'W' },
+    { 'W',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 'W' },
+    { 'W',' ',' ',' ',' ',' ',' ',' ',' ','W','W',' ',' ',' ',' ',' ',' ',' ',' ',' ', 'W' },
+    { 'W',' ',' ',' ',' ',' ',' ',' ','W','W','W','W',' ',' ',' ',' ',' ',' ',' ',' ', 'W' },
+    { 'W',' ',' ',' ',' ',' ',' ',' ','W','W','W','W','W',' ',' ',' ',' ',' ',' ','W', 'W' },
+};
+// clang-format on
 
 } // namespace RavineDespoilerGame

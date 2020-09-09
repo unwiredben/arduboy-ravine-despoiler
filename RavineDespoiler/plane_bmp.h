@@ -3,6 +3,7 @@
 constexpr uint8_t plane_width = 18;
 constexpr uint8_t plane_height = 11; // extra height is masked off
 
+// clang-format off
 const unsigned char PROGMEM plane_plus_mask[] =
 {
 // width, height,

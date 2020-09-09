@@ -1,5 +1,7 @@
 // Font 4x6 - adapted from https://github.com/Press-Play-On-Tape/FirePanic
 
+// clang-format off
+
 // BSD 3-Clause License
 
 // Copyright (c) 2019, Press Play On Tape
