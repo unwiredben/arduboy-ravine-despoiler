@@ -419,11 +419,11 @@ void objective_screen() {
 
 void drawScore() {
   auto s = score;
-  auto x = (WIDTH / 2) + 7;
+  auto x = center_x(4 * font4x6_width) + 2 * font4x6_width;
   do {
     sprites.drawOverwrite(x, 0, font4x6_digits, s % 10);
     s = s / 10;
-    x = x - 5;
+    x = x - font4x6_width;
   } while (s != 0);
 }
 
@@ -438,7 +438,7 @@ void game_active() {
   }
   plane.applyXVelocity();
 
-  if (!bomb.active && arduboy.justPressed(A_BUTTON)) {
+  if (arduboy.justPressed(A_BUTTON) && !bomb.active && plane.visible()) {
     bomb.drop(plane.x + (plane_width / 2), plane.y + plane_height, plane.x_vel);
   }
   bomb.applyVelocity();

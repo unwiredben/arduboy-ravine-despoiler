@@ -34,6 +34,8 @@
 
 #pragma once
 
+constexpr uint8_t font4x6_width = 5;
+
 const uint8_t PROGMEM font4x6_digits[] = {
 4, 8,
 0x1E,	0x29,	0x25,	0x1E,	//0
