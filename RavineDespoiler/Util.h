@@ -30,3 +30,10 @@ template <class T>
 constexpr bool in_closed_range(const T &val, const T &bottom, const T &top) {
   return val >= bottom && val <= top;
 }
+
+template <class T1, class T2>
+void swap(T1 &a, T2 &b) {
+  auto temp = a;
+  a = b;
+  b = temp;
+}

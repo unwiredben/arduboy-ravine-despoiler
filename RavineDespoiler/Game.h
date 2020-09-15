@@ -42,25 +42,13 @@ Sprites sprites;
 
 namespace RavineDespoilerGame {
 
-// Simulates friction
-// Not actually how a real coefficient of friction works
-constexpr Number CoefficientOfFriction = 0.95;
-
 // Simulates gravity
 // Earth's gravitational pull is 9.8 m/s squared
 // But that's far too powerful for the tiny screen
 // So I picked something small
-constexpr Number CoefficientOfGravity = 0.5;
+constexpr Number CoefficientOfGravity = 0.3;
 
-// Simulates bounciness
-// Again, not quite like the real deal
-constexpr Number CoefficientOfRestitution = 0.7;
-
-// Prevents never-ending bounciness
-constexpr Number RestitutionThreshold = Number::Epsilon * 16;
-
-// Amount of force the player exerts
-constexpr Number InputForce = 0.25;
+int16_t score;
 
 struct GameObject {
   BigNumber x = 0, x_min = 0, x_max = WIDTH, x_vel = 0;
@@ -85,26 +73,6 @@ struct GameObject {
       x = x_max;
       x_vel = -x_vel;
     }
-    // x_vel = x_vel * CoefficientOfFriction;
-  }
-
-  void applyYVelocity() {
-    if (y_vel != 0) {
-      y = y + y_vel;
-      if (y < y_min) {
-        y = y_min;
-        y_vel = -y_vel;
-      } else if (y > y_max) {
-        y = y_max;
-        y_vel = -y_vel * CoefficientOfRestitution;
-      }
-    }
-    y_vel = y_vel + CoefficientOfGravity;
-  }
-
-  void applyVelocity() {
-    applyXVelocity();
-    applyYVelocity();
   }
 };
 
@@ -115,14 +83,35 @@ struct Ravine {
 
   static constexpr uint8_t boulders_x_start = 11;
   static constexpr uint8_t boulders_y_start = 0 + ravine_top;
+  static constexpr uint8_t boulder_size = 5;
+
+  uint16_t boulder_count;
+
+  bool cleared() { return boulder_count == 0; }
+
+  void explodeAt(uint8_t bx, uint8_t by) {
+    char &b = boulders[by][bx];
+    if (b == '0') {
+      b = '1';
+      --boulder_count;
+      // score one point for each boulder above & including the one being
+      // destroyed
+      for (int8_t i = by; i >= 0; --i) {
+        if (boulders[i][bx] != ' ')
+          ++score;
+      }
+    }
+  }
 
   void reset(char fill) {
     // reset all non-walls to supplied state
+    boulder_count = 0;
     for (int8_t i = 0; i < boulders_width; ++i) {
       for (int8_t j = 0; j < boulders_height; ++j) {
         char b = boulders[j][i];
         if (b != 'W') {
           boulders[j][i] = fill;
+          ++boulder_count;
         }
       }
     }
@@ -161,36 +150,155 @@ struct Ravine {
     }
   }
 
-  void explodeOne() {
-    int8_t i = random(0, boulders_width);
-    int8_t j = random(0, boulders_height);
-    char &b = boulders[j][i];
-    if (b == '0')
-      b = '1';
-  }
-
   void draw() {
     sprites.drawOverwrite(0, ravine_top, ravine_bmp, 0);
     for (int8_t i = 0; i < boulders_width; ++i) {
       for (int8_t j = 0; j < boulders_height; ++j) {
         char b = boulders[j][i];
         if (b >= '0' && b <= '6') {
-          sprites.drawPlusMask(i * 5 + boulders_x_start,
-                               j * 5 + boulders_y_start, boulder_plus_mask,
-                               b - '0');
+          sprites.drawPlusMask(i * boulder_size + boulders_x_start,
+                               j * boulder_size + boulders_y_start,
+                               boulder_plus_mask, b - '0');
         } else if (b == '.') {
-          sprites.drawPlusMask(i * 5 + boulders_x_start,
-                               j * 5 + boulders_y_start + 3, boulder_plus_mask,
-                               0);
+          sprites.drawPlusMask(i * boulder_size + boulders_x_start,
+                               j * boulder_size + boulders_y_start + 3,
+                               boulder_plus_mask, 0);
         }
       }
     }
   }
+
+  // maps screen coordinate to boulder number, returns true if boulder
+  // coordinates are valid
+  bool boulderAtXY(uint8_t x, uint8_t y, uint8_t &bx, uint8_t &by) {
+    bx = (x - boulders_x_start) / boulder_size;
+    by = (y - boulders_y_start) / boulder_size;
+    return (bx < boulders_width) && (by < boulders_height);
+  }
 } // namespace RavineDespoilerGame
 ravine;
 
+struct Bomb : public GameObject {
+  static constexpr uint8_t framesToKeepFalling = 3;
+
+  bool active;
+  uint8_t postCollisionFrames;
+
+  void miss() {
+    active = false;
+    // penalty for missing!
+    if (!postCollisionFrames)
+      score = max(0, score - 5);
+  }
+
+  void checkForCollision(uint8_t ix, uint8_t iy) {
+    // check if we've gone off the screen
+    if (y >= HEIGHT || x >= WIDTH) {
+      miss();
+      return;
+    }
+
+    if (arduboy.getPixel(ix, iy) == WHITE) {
+      uint8_t bx, by;
+      if (ravine.boulderAtXY(ix, iy, bx, by)) {
+        char boulder = ravine.boulders[by][bx];
+        if (boulder == 'W') {
+          miss();
+        } else if (boulder == '0') {
+          if (postCollisionFrames == 0) {
+            postCollisionFrames = framesToKeepFalling;
+          }
+          ravine.explodeAt(bx, by);
+        }
+      }
+    }
+  }
+
+  void applyVelocity() {
+    // once we collide, bomb only stays active for a few frames allowing
+    // pentrating a few boulders, then it disappears
+    if (postCollisionFrames && !--postCollisionFrames) {
+      active = false;
+    }
+    if (!active)
+      return;
+
+    auto x0 = x.getInteger();
+    auto y0 = y.getInteger();
+    x = x + x_vel;
+    y = y + y_vel;
+    y_vel = y_vel + CoefficientOfGravity;
+    auto x1 = x.getInteger();
+    auto y1 = y.getInteger();
+
+    // adaptation of Bresenham's Line Drawing algorithm
+    // from Arduboy2 library
+    bool steep = abs(y1 - y0) > abs(x1 - x0);
+    if (steep) {
+      swap(x0, y0);
+      swap(x1, y1);
+    }
+
+    if (x0 > x1) {
+      swap(x0, x1);
+      swap(y0, y1);
+    }
+
+    int16_t dx = x1 - x0;
+    int16_t dy = abs(y1 - y0);
+
+    int16_t err = dx / 2;
+    int8_t ystep;
+
+    if (y0 < y1) {
+      ystep = 1;
+    } else {
+      ystep = -1;
+    }
+
+    for (; x0 <= x1; x0++) {
+      if (steep) {
+        checkForCollision(y0, x0);
+        if (!active)
+          return;
+      } else {
+        checkForCollision(x0, y0);
+        if (!active)
+          return;
+      }
+
+      err -= dy;
+      if (err < 0) {
+        y0 += ystep;
+        err += dx;
+      }
+    }
+  }
+
+  void draw() {
+    if (active) {
+      int8_t ix = x.getInteger(), iy = y.getInteger();
+      arduboy.drawPixel(ix, iy, WHITE);
+    }
+  }
+
+  void reset() {
+    active = false;
+    postCollisionFrames = 0;
+  }
+
+  void drop(BigNumber x, Number y, BigNumber x_vel) {
+    active = true;
+    this->x = x;
+    this->y = y;
+    y_vel = 0;
+    this->x_vel = x_vel;
+  }
+} bomb;
+
 struct Plane : public GameObject {
-  static constexpr BigNumber offscreen_x_margin = 10;
+  static constexpr BigNumber offscreen_x_margin = 16;
+
   Plane() {
     x_min = -offscreen_x_margin - plane_width;
     x_max = WIDTH + offscreen_x_margin;
@@ -206,7 +314,7 @@ struct Plane : public GameObject {
   }
 
   void reset() {
-    x = 10;
+    x = x_min;
     y = 2;
     x_vel = 1;
   }
@@ -215,6 +323,8 @@ struct Plane : public GameObject {
     int8_t ix = x.getInteger(), iy = y.getInteger();
     sprites.drawPlusMask(ix, iy, plane_plus_mask, x_vel > 0);
   }
+
+  bool visible() { return (x > -plane_width) && (x < WIDTH); }
 } plane;
 
 struct Zeppelin : public GameObject {
@@ -260,6 +370,7 @@ void enter_state(GameState newState) {
     randomSeed(arduboy.generateRandomSeed());
     plane.reset();
     ravine.reset('0');
+    score = 0;
   }
 }
 
@@ -306,6 +417,16 @@ void objective_screen() {
   }
 }
 
+void drawScore() {
+  auto s = score;
+  auto x = (WIDTH / 2) + 7;
+  do {
+    sprites.drawOverwrite(x, 0, font4x6_digits, s % 10);
+    s = s / 10;
+    x = x - 5;
+  } while (s != 0);
+}
+
 void game_active() {
   // process input
   plane.x_vel = plane.x_vel < 0 ? -1 : 1;
@@ -317,18 +438,32 @@ void game_active() {
   }
   plane.applyXVelocity();
 
+  if (!bomb.active && arduboy.justPressed(A_BUTTON)) {
+    bomb.drop(plane.x + (plane_width / 2), plane.y + plane_height, plane.x_vel);
+  }
+  bomb.applyVelocity();
+
   // update boulders every four frames
   if (arduboy.frameCount % 4 == 0) {
     ravine.update();
   }
 
-  if (arduboy.frameCount % 128 == 0) {
-    ravine.explodeOne();
-  }
+  // if (arduboy.frameCount % 128 == 0) {
+  //   ravine.explodeOne();
+  // }
 
   arduboy.clear();
   ravine.draw();
-  plane.draw();
+  if (plane.visible()) {
+    plane.draw();
+  } else {
+    if (ravine.cleared()) {
+      enter_state(GameState::LEVEL_COMPLETE);
+    } else {
+      drawScore();
+    }
+  }
+  bomb.draw();
 
   // temporary change to allow resetting
   if (arduboy.pressed(A_BUTTON) && arduboy.justPressed(B_BUTTON)) {
