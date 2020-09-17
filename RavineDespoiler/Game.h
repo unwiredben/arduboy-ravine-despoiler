@@ -1,5 +1,7 @@
 /*
    Copyright (C) 2020 Ben Combee (@unwiredben)
+   Copyright (c) 2016-2020, Scott Allen
+   All rights reserved.  
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -233,6 +235,7 @@ struct Bomb : public GameObject {
 
     // adaptation of Bresenham's Line Drawing algorithm
     // from Arduboy2 library
+   
     bool steep = abs(y1 - y0) > abs(x1 - x0);
     if (steep) {
       swap(x0, y0);
