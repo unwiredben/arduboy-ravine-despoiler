@@ -427,7 +427,7 @@ void drawScore(uint8_t x, uint8_t y) {
   do {
     sprites.drawOverwrite(x, y, final_numbers_bmp, s % 10);
     s = s / 10;
-    x = x - final_numbers_height;
+    x = x - final_numbers_width;
   } while (s != 0);
 }
 
