@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2020 Ben Combee (@unwiredben)
    Copyright (c) 2016-2020, Scott Allen
-   All rights reserved.  
+   All rights reserved.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -27,8 +27,9 @@ using BigNumber = SFixed<15, 16>;
 
 #include "Util.h"
 
-#include "Font4x6.h"
 #include "boulder_bmp.h"
+#include "final_cmpbmp.h"
+#include "final_numbers_bmp.h"
 #include "logo_bmp.h"
 #include "plane_bmp.h"
 #include "press_a_bmp.h"
@@ -235,7 +236,7 @@ struct Bomb : public GameObject {
 
     // adaptation of Bresenham's Line Drawing algorithm
     // from Arduboy2 library
-   
+
     bool steep = abs(y1 - y0) > abs(x1 - x0);
     if (steep) {
       swap(x0, y0);
@@ -420,13 +421,13 @@ void objective_screen() {
   }
 }
 
-void drawScore() {
+void drawScore(uint8_t x, uint8_t y) {
   auto s = score;
-  auto x = center_x(4 * font4x6_width) + 2 * font4x6_width;
+  x = x + final_numbers_width * 2;
   do {
-    sprites.drawOverwrite(x, 0, font4x6_digits, s % 10);
+    sprites.drawOverwrite(x, y, final_numbers_bmp, s % 10);
     s = s / 10;
-    x = x - font4x6_width;
+    x = x - final_numbers_height;
   } while (s != 0);
 }
 
@@ -463,7 +464,7 @@ void game_active() {
     if (ravine.cleared()) {
       enter_state(GameState::LEVEL_COMPLETE);
     } else {
-      drawScore();
+      drawScore(center_x(3 * final_numbers_width), 0);
     }
   }
   bomb.draw();
@@ -475,7 +476,17 @@ void game_active() {
 }
 
 void level_complete() {
-  if (arduboy.frameCount > 150 && !sound.playing()) {
+  if (arduboy.frameCount == 10) {
+    uint8_t x = center_x(final_width);
+    uint8_t y = center_y(final_height);
+    arduboy.fillRect(x - 1, y, final_width + 2, final_height, BLACK);
+    arduboy.drawCompressed(center_x(final_width), center_y(final_height),
+                           final_cmpbmp);
+    drawScore(x + final_numbers_x, y + final_numbers_y);
+  }
+
+  if (arduboy.frameCount > 120 && !sound.playing() &&
+      arduboy.pressed(A_BUTTON)) {
     enter_state(TITLE_SCREEN);
   }
 }
