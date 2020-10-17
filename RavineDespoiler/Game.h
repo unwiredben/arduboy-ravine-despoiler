@@ -45,6 +45,10 @@ Sprites sprites;
 
 namespace RavineDespoilerGame {
 
+const uint16_t end_of_level_theme[] PROGMEM = {
+0x0293,0x00FA, 0x024B,0x00FA, 0x0293,0x00FA, 0x0000,0x00FA, 0x01EE,0x00FA, 0x0000,0x00FA, 0x024B,0x00FA, 0x0293,0x0177, 0x0000,0x007D, 
+0x01B8,0x00FA, 0x0000,0x007D, 0x020B,0x00FA, 0x0000,0x007D, 0x0293,0x0177, TONES_END };
+
 // Simulates gravity
 // Earth's gravitational pull is 9.8 m/s squared
 // But that's far too powerful for the tiny screen
@@ -483,6 +487,7 @@ void level_complete() {
     arduboy.drawCompressed(center_x(final_width), center_y(final_height),
                            final_cmpbmp);
     drawScore(x + final_numbers_x, y + final_numbers_y);
+    sound.tones(end_of_level_theme);
   }
 
   if (arduboy.frameCount > 120 && !sound.playing() &&
