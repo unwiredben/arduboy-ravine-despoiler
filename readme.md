@@ -17,7 +17,6 @@ you clear a canyon, it magically refills.
 
 ## THINGS TO IMPLEMENT
 
-* explainer screen
 * animated ravine filling at start of level
 * plane flying sound effect
 * bomb dropping sound effect
