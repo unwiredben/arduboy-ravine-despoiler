@@ -28,6 +28,7 @@ using BigNumber = SFixed<15, 16>;
 #include "Util.h"
 
 #include "boulder_bmp.h"
+#include "explainer_cmpbmp.h"
 #include "final_cmpbmp.h"
 #include "final_numbers_bmp.h"
 #include "logo_bmp.h"
@@ -410,17 +411,16 @@ void title_screen() {
   zeppelin.draw();
 
   if (arduboy.justPressed(A_BUTTON)) {
-    // enter_state(OBJECTIVE_SCREEN);
-    enter_state(GAME_ACTIVE);
+    enter_state(OBJECTIVE_SCREEN);
   }
 }
 
 void objective_screen() {
   if (arduboy.frameCount == 1) {
     arduboy.clear();
-    // arduboy.drawCompressed(0, 0, objective_cmpimg);
+    arduboy.drawCompressed(0, 0, explainer_cmpbmp);
   }
-  if (arduboy.frameCount > 120) {
+  if (arduboy.frameCount > 180) {
     enter_state(GAME_ACTIVE);
   }
 }
