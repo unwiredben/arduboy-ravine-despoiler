@@ -27,6 +27,7 @@ using BigNumber = SFixed<15, 16>;
 
 #include "Util.h"
 
+#include "bridge_abridged.h"
 #include "boulder_bmp.h"
 #include "explainer_cmpbmp.h"
 #include "final_cmpbmp.h"
@@ -398,6 +399,7 @@ void title_screen() {
     arduboy.clear();
     ravine.draw();
     sprites.drawOverwrite(logo_x, logo_y, logo_bmp, 0);
+    sound.tones(bridge_theme);
   }
   if (arduboy.frameCount == 180) {
     arduboy.fillRect(24, 48, press_a_to_start_width, press_a_to_start_height,
