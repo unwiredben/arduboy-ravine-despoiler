@@ -2,7 +2,7 @@
 
 a Arduboy game developed by Ben Combee
 
-<img src="screenshot.png" alt="screenshot with saucer beaming up a cow">
+<img src="screenshot.png" alt="screenshot of the game title screen">
 
 This game was originally started for the black & white Pebble watch.  I ended up
 getting some basic animation going and had it as a watch face, but I never implemented
