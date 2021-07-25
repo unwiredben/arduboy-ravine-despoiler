@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2020 Ben Combee (@unwiredben)
+   Copyright (C) 2020-2021 Ben Combee (@unwiredben)
    Copyright (c) 2016-2020, Scott Allen
    All rights reserved.
 

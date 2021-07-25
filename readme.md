@@ -15,18 +15,9 @@ your plane and drop bombs in the canyon to knock out boulders for points.  Missi
 rocks will result in losing time, and when you run out of time, the game's over.  If
 you clear a canyon, it magically refills.
 
-## THINGS TO IMPLEMENT
-
-* animated ravine filling at start of level
-* plane flying sound effect
-* bomb dropping sound effect
-* explosion sound effect
-* level timer ???
-* better score display
-
 ## LICENSE
 
-Copyright (C) 2020, Ben Combee
+Copyright (C) 2020-2021, Ben Combee
 Released under Apache 2.0 license
 
 Physics code originally adapted from https://github.com/Pharap/PhysixArduboy/blob/master/LICENSE
