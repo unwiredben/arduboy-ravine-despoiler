@@ -364,7 +364,9 @@ enum GameState {
   OBJECTIVE_SCREEN,
   GAME_ACTIVE,
   LEVEL_COMPLETE
-} state = INITIAL_LOGO;
+};
+
+GameState state = INITIAL_LOGO;
 
 void enter_state(GameState newState) {
   arduboy.frameCount = 0;
@@ -458,10 +460,6 @@ void game_active() {
     ravine.update();
   }
 
-  // if (arduboy.frameCount % 128 == 0) {
-  //   ravine.explodeOne();
-  // }
-
   arduboy.clear();
   ravine.draw();
   if (plane.visible()) {
@@ -475,9 +473,15 @@ void game_active() {
   }
   bomb.draw();
 
-  // temporary change to allow resetting
-  if (arduboy.pressed(A_BUTTON) && arduboy.justPressed(B_BUTTON)) {
-    enter_state(INITIAL_LOGO);
+  if (bomb.active) {
+    sound.tone(300 + (bomb.y - plane.y).getInteger() * 20);
+  }
+  else if (plane.visible()) {
+    // make engine sound
+    sound.tone(16 + (30 * abs(plane.x_vel)).getInteger());
+  }
+  else {
+    sound.noTone();
   }
 }
 
