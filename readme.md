@@ -5,15 +5,21 @@ a Arduboy game developed by Ben Combee
 <img src="screenshot.png" alt="screenshot of the game title screen">
 
 This game was originally started for the black & white Pebble watch.  I ended up
-getting some basic animation going and had it as a watch face, but I never implemented
-the game controls.  After doing my first Arduboy game jam (which required all new
-programming), I figured I'd come back to this one, porting over some of my Pebble code
-and assets to the new platform.
+getting some basic animation going and had it as a watch face, but I never
+implemented the game controls.  After doing my first Arduboy game jam (which
+required all new programming), I figured I'd come back to this one, porting over
+some of my Pebble code and assets to the new platform.
 
-It's based on the Atari arcade game Canyon Bomber.  You can speed up or slow down
-your plane and drop bombs in the canyon to knock out boulders for points.  Missing
-rocks will result in losing time, and when you run out of time, the game's over.  If
-you clear a canyon, it magically refills.
+It's based on the Atari arcade game Canyon Bomber.  You can speed up or slow
+down your plane and drop bombs in the canyon to knock out boulders for points.
+Missing rocks will result in losing points, while hitting multiple boulders at
+once gives extra points.  The game is over when the canyon is emptied.  I'm not
+sure what the theoretical high score is, but my best games have been around 240
+with several misses.
+
+Discussion of the game is at <a href="https://community.arduboy.com/t/ravine-despoiler/9284">this Arduboy Community thread.</a>
+
+<a href="https://felipemanga.github.io/ProjectABE/?url=https://raw.githubusercontent.com/unwiredben/arduboy-ravine-despoiler/main/RavineDespoiler.hex&skin=arduboy">Play it in your browser using ProjectABE!</a>
 
 ## LICENSE
 
